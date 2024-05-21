@@ -13,10 +13,26 @@ class ViewController: UIViewController {
     var urlRequest : URLRequest?
     var urlSession : URLSession?
     var companies : [Company] = []
+    private let reuseIdentifierForCell = "CompanyTableViewCell"
+    var uiNib : UINib?
+    
+    @IBOutlet weak var companyTableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        initializeTableView()
+        registerCompanyTableViewWithXIB()
         serializeJSON()
+    }
+    
+    func initializeTableView(){
+        companyTableView.dataSource = self
+        companyTableView.delegate = self
+    }
+    
+    func registerCompanyTableViewWithXIB(){
+        uiNib = UINib(nibName: reuseIdentifierForCell, bundle: nil)
+        companyTableView.register(uiNib, forCellReuseIdentifier: reuseIdentifierForCell)
     }
     
     func serializeJSON(){
@@ -44,7 +60,34 @@ class ViewController: UIViewController {
                 let companySwiftObject = Company(id: eachCompanyId, name: eachCompanyName, address: eachCompanyAddress, zip: eachCompanyZip, country: eachCompanyCountry)
                 self.companies.append(companySwiftObject)
             }
+            
+            DispatchQueue.main.async {
+                self.companyTableView.reloadData()
+            }
+            
             print(self.companies)
         }.resume()
+    }
+}
+
+extension ViewController : UITableViewDataSource{
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        companies.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let companyTableViewCell = self.companyTableView.dequeueReusableCell(withIdentifier: reuseIdentifierForCell, for: indexPath) as! CompanyTableViewCell
+        
+        companyTableViewCell.companyNameLabel.text = companies[indexPath.row].name
+        companyTableViewCell.companyZipLabel.text = companies[indexPath.row].zip
+        companyTableViewCell.companyCountryLabel.text = companies[indexPath.row].country
+        
+        return companyTableViewCell
+    }
+}
+
+extension ViewController : UITableViewDelegate{
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 140.0
     }
 }
